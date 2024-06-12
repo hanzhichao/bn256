@@ -30,7 +30,7 @@ NAF_6UP2 = list(reversed(_to_naf(6 * U + 2)))[1:]
 
 def line_func_add(r: TwistPoint, p: TwistPoint, q: CurvePoint, r2: Gfp2):
     assert (
-        isinstance(r, TwistPoint) and isinstance(p, TwistPoint) and isinstance(q, CurvePoint) and isinstance(r2, Gfp2)
+            isinstance(r, TwistPoint) and isinstance(p, TwistPoint) and isinstance(q, CurvePoint) and isinstance(r2, Gfp2)
     )
 
     r_t = r.z.square()
@@ -279,6 +279,9 @@ class Gt(object):
 
     def add(self, other: "Gt") -> "Gt":
         return Gt(self.p.mul(other.p))
+
+    def neg(self) -> "Gt":
+        return Gt(self.p.negative_of())
 
     def marshal(self) -> bytes:
         return b"".join(
