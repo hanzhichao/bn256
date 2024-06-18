@@ -1,135 +1,187 @@
-from typing import Union
+from .constants import P
 
-from .gfp1 import P, Gfp1, CURVE_B
-from .utils import bits_of
+from .utils import bits_of, mod_inverse
 
 
 class Gfp2(object):
-    x: Gfp1
-    y: Gfp1
+    def __init__(self, x: int, y: int):
+        self.x: int = x
+        self.y: int = y
 
-    def __init__(self, x: Union[Gfp1, int], y: Union[Gfp1, int]):
-        """
-        Represented as i*x + y
-        """
-        if isinstance(x, Gfp1):
-            self.x = x
-            self.y = y
-        else:
-            # Assumed to be integers
-            self.x = Gfp1(x)
-            self.y = Gfp1(y)
+    @classmethod
+    def zero(cls) -> "Gfp2":
+        return cls(0, 0)
 
-    def __str__(self):
-        return "(%d,%d)" % (self.x.value(), self.y.value())
+    @classmethod
+    def one(cls) -> "Gfp2":
+        return cls(0, 1)
 
-    def __repr__(self):
-        return "<Gfp2 (%d,%d)>" % (self.x.value(), self.y.value())
+    def __str__(self):  # ✅
+        return self.string()
 
-    def __eq__(self, other):
-        return self.x == other.x and self.y == other.y
+    def __repr__(self):  # ✅
+        return "<Gfp2 (%d,%d)>" % (self.x % P, self.y % P)
 
-    def __ne__(self, other):
-        return self.x != other.x or self.y != other.y
-
-    def is_zero(self) -> bool:
-        return self.x.is_zero() and self.y.is_zero()
-
-    def is_one(self) -> bool:
-        return self.x.is_zero() and self.y.is_one()
-
-    def conjugate_of(self) -> "Gfp2":
-        """
-        For gamma = A + iB \in gfp2
-        gamma^p = A - iB
-        """
-        return Gfp2(self.x.additive_inverse(), self.y)
-
-    def negative_of(self) -> "Gfp2":
-        return Gfp2(self.x.additive_inverse(), self.y.additive_inverse())
-
-    def add(self, other: "Gfp2") -> "Gfp2":
+    def __eq__(self, other: "Gfp2") -> bool:  # ✅
         assert isinstance(other, Gfp2)
-        return Gfp2((self.x + other.x), (self.y + other.y))
+        ax = self.x % P
+        ay = self.y % P
+        bx = other.x % P
+        by = other.y % P
+        return ax == bx and ay == by
 
-    def sub(self, other: "Gfp2") -> "Gfp2":
+    def __ne__(self, other: "Gfp2") -> bool:  # ✅
         assert isinstance(other, Gfp2)
-        return Gfp2((self.x - other.x), (self.y - other.y))
+        ax = self.x % P
+        ay = self.y % P
+        bx = other.x % P
+        by = other.y % P
+        return ax != bx or ay != by
 
-    def double(self) -> "Gfp2":
-        return Gfp2((self.x.double()), (self.y.double()))
+    def __neg__(self) -> "Gfp2":  # ✅
+        return self.negative()
 
-    def mul(self, other: "Gfp2") -> "Gfp2":
-        assert isinstance(other, Gfp2)
-        # Karatsuba
-        vy = self.y * other.y
-        vx = self.x * other.x
-        c0 = vy - vx
-        c1 = (self.x + self.y) * (other.x + other.y) - vy - vx
-
-        return Gfp2(c1, c0)
-
-    def __mul__(self, other: "Gfp2") -> "Gfp2":
-        return self.mul(other)
-
-    def __sub__(self, other: "Gfp2") -> "Gfp2":
-        return self.sub(other)
-
-    def __add__(self, other: "Gfp2") -> "Gfp2":
+    def __add__(self, other: "Gfp2") -> "Gfp2":  # ✅
         return self.add(other)
 
-    def mul_scalar(self, k) -> "Gfp2":
-        return Gfp2((self.x * k), (self.y * k))
+    def __sub__(self, other: "Gfp2") -> "Gfp2":  # ✅
+        return self.sub(other)
+
+    def __mul__(self, other: "Gfp2") -> "Gfp2":  # ✅
+        return self.mul(other)
+
+    def __pow__(self, k: int) -> "Gfp2":  # ✅
+        return self.exp(k)
+
+    def __invert__(self) -> "Gfp2":  # ✅
+        return self.invert()
+
+    def __copy__(self) -> "Gfp2":  # ✅
+        return self.copy()
+
+    def set(self, x: int, y: int) -> "Gfp2":
+        assert isinstance(x, int) and isinstance(y, int)
+        self.x = x
+        self.y = y
+        return self
+
+    def set_zero(self) -> "Gfp2":
+        self.x = 0
+        self.y = 0
+        return self
+
+    def set_one(self) -> "Gfp2":
+        self.x = 0
+        self.y = 1
+        return self
+
+    def is_zero(self) -> bool:  # ✅
+        return self.x % P == 0 and self.y % P == 0
+
+    def is_one(self) -> bool:  # ✅
+        return self.x % P == 0 and self.y % P == 1
+
+    def add(self, other: "Gfp2") -> "Gfp2":  # ✅
+        assert isinstance(other, Gfp2)
+        x = self.x + other.x
+        y = self.y + other.y
+        return Gfp2(x, y)
+
+    def sub(self, other: "Gfp2") -> "Gfp2":  # ✅
+        assert isinstance(other, Gfp2)
+        x = (self.x - other.x) % P
+        y = (self.y - other.y) % P
+        return Gfp2((self.x - other.x), (self.y - other.y))
+
+    def mul(self, other: "Gfp2") -> "Gfp2":  # ✅
+        assert isinstance(other, Gfp2)
+        x = (self.x * other.y + other.x * self.y) % P
+        y = (self.y * other.y - self.x * other.x) % P
+        return Gfp2(x, y)
+
+    def double(self) -> "Gfp2":  # ✅
+        x = self.x + self.x
+        y = self.y + self.y
+        return Gfp2(x, y)
+
+    def mul_scalar(self, k: int) -> "Gfp2":  # ✅
+        x = self.x * k
+        y = self.y * k
+        return Gfp2(x, y)
 
     # Multiply by i+3
-    def mul_xi(self) -> "Gfp2":
-        # (xi + y)(3 + i) = 3xi + 3y - x + yi = (3x + y)i + (3y - x)
-        tx = (self.x.triple()) + self.y
-        ty = (self.y.triple()) - self.x
-        return Gfp2(tx, ty)
+    def mul_xi(self) -> "Gfp2":  # ✅
+        # (xi+y)(i+3) = (9x+y)i+(9y-x)
+        x = (self.x << 3) + self.x + self.y
+        y = (self.y << 3) + self.y - self.x
+        return Gfp2(x, y)
 
-    def square(self) -> "Gfp2":
-        assert isinstance(self.x, Gfp1) and isinstance(self.y, Gfp1)
-        # Complex squaring
-        t1 = self.y - self.x
-        t2 = self.y + self.x
-        ty = t1 * t2
-        # ty = self.y*self.y - self.x*self.x
-        tx = self.x * self.y
-        tx = tx.double()
-        return Gfp2(tx, ty)
+    def square(self) -> "Gfp2":  # ✅
+        x = self.x * self.y
+        x = (x + x) % P
+        y = (self.y - self.x) * (self.y + self.x) % P
+        return Gfp2(x, y)
 
-    def inverse(self) -> "Gfp2":
-        # Algorithm 8 from http://eprint.iacr.org/2010/354.pdf
-        t = self.x.square() + self.y.square()
-        inv = t.inverse()
-        c_x = self.x.additive_inverse() * inv
-        c_y = self.y * inv
+    def invert(self) -> "Gfp2":  # ✅
+        t = self.y * self.y + self.x * self.x
+        inv = mod_inverse(t, P)
+        x = (-self.x * inv) % P
+        y = (self.y * inv) % P
+        return Gfp2(x, y)
 
-        return Gfp2(c_x, c_y)
+    def exp(self, k: int) -> "Gfp2":  # ✅
+        assert isinstance(k, int)
+        r = Gfp2.one()
+        for b in bits_of(k):
+            r = r * r if b == 0 else r * r * self
+        return r
 
-    def exp(self, k: int) -> "Gfp2":
-        assert isinstance(k, int) and isinstance(self, Gfp2)
-        R = [Gfp2(Gfp1(0), Gfp1(1)), self]
-        for kb in bits_of(k):
-            R[kb ^ 1] = R[kb].mul(R[kb ^ 1])
-            assert type(R[kb]) == Gfp2
-            R[kb] = R[kb].square()  # FIXME
-        return R[0]
+    def negative(self) -> "Gfp2":  # ✅
+        return Gfp2(-self.x, -self.y)
+
+    def conjugate(self) -> "Gfp2":  # ✅
+        return Gfp2(-self.x, self.y)
+
+    def string(self) -> str:  # ✅
+        return "(%d,%d)" % (self.x % P, self.y % P)
+
+    def minimal(self) -> "Gfp2":
+        if self.x < 0 or self.x >= P:
+            self.x = self.x % P
+        if self.y < 0 or self.y >= P:
+            self.y = self.y % P
+        return self
+
+    def real(self) -> int:
+        return self.x
+
+    def imag(self) -> int:
+        return self.y
+
+    def copy(self) -> "Gfp2":
+        return Gfp2(self.x, self.y)
 
 
-GFP2_ZERO = Gfp2(0, 0)
-GFP2_ONE = Gfp2(0, 1)
+XI_TO_P_MINUS_1_OVER_6 = Gfp2(
+    16469823323077808223889137241176536799009286646108169935659301613961712198316,
+    8376118865763821496583973867626364092589906065868298776909617916018768340080,
+)
 
+XI_TO_P_MINUS_1_OVER_3 = Gfp2(
+    10307601595873709700152284273816112264069230130616436755625194854815875713954,
+    21575463638280843010398324269430826099269044274347216827212613867836435027261,
+)
 
-XI = Gfp2(1, 3)  # i + 3
+XI_TO_P_MINUS_1_OVER_2 = Gfp2(
+    3505843767911556378687030309984248845540243509899259641013678093033130930403,
+    2821565182194536844548159561693502659359617185244120367078079554186484126554,
+)
 
-XI1 = [
-    XI.exp(1 * (P - 1) // 6),
-    XI.exp(2 * (P - 1) // 6),
-    XI.exp(3 * (P - 1) // 6),
-    XI.exp(4 * (P - 1) // 6),
-    XI.exp(5 * (P - 1) // 6),
-]
+XI_TO_P_SQUARED_MINUS_1_OVER_3 = 21888242871839275220042445260109153167277707414472061641714758635765020556616
 
-XI2 = [(x * x.conjugate_of()) for x in XI1]
+XI_TO_2P_MINUS_2_OVER_3 = Gfp2(
+    19937756971775647987995932169929341994314640652964949448313374472400716661030,
+    2581911344467009335267311115468803099551665605076196740867805258568234346338,
+)
+
+XI_TO_2P_SQUARED_MINUS_2_OVER_3 = 2203960485148121921418603742825762020974279258880205651966

@@ -1,106 +1,150 @@
-from .gfp6 import Gfp6, GFP6_ZERO, GFP6_ONE
-from .gfp2 import XI1, XI2
+from .gfp6 import Gfp6
+from .gfp2 import Gfp2
 from .utils import bits_of
+
+XI_TO_P_MINUS_1_OVER_6 = Gfp2(
+    16469823323077808223889137241176536799009286646108169935659301613961712198316,
+    8376118865763821496583973867626364092589906065868298776909617916018768340080,
+)
+
+XI_TO_P_SQUARED_MINUS_1_OVER_6 = 21888242871839275220042445260109153167277707414472061641714758635765020556617
 
 
 class Gfp12(object):
-    x: Gfp6
-    y: Gfp6
-
     def __init__(self, x: Gfp6, y: Gfp6 = None):
         assert isinstance(x, Gfp6) and isinstance(y, Gfp6)
-        self.x = x
-        self.y = y
+        self.x: Gfp6 = x
+        self.y: Gfp6 = y
 
-    def __eq__(self, other):
+    def __eq__(self, other: "Gfp12") -> bool:  # ✅
         return self.x == other.x and self.y == other.y
 
-    def __repr__(self):
-        return "(%s,%s)" % (self.x, self.y)
+    def __ne__(self, other: "Gfp12") -> bool:  # ✅
+        return self.x != other.x or self.y == other.y
 
-    def is_zero(self) -> bool:
+    def __str__(self):  # ✅
+        return self.string()
+
+    def __repr__(self):  # ✅
+        return "<Gfp12 %s>" % self
+
+    def __add__(self, other: "Gfp12") -> "Gfp12":  # ✅
+        return self.add(other)
+
+    def __sub__(self, other: "Gfp12") -> "Gfp12":  # ✅
+        return self.sub(other)
+
+    def __mul__(self, other: "Gfp12") -> "Gfp12":  # ✅
+        return self.mul(other)
+
+    def __neg__(self) -> "Gfp12":  # ✅
+        return self.negative()
+
+    def __pow__(self, k: int) -> "Gfp12":  # ✅
+        return self.exp(k)
+
+    def __copy__(self) -> "Gfp12":  # ✅
+        return self.copy()
+
+    @classmethod
+    def zero(cls) -> "Gfp12":  # ✅
+        return cls(Gfp6.zero(), Gfp6.zero())
+
+    @classmethod
+    def one(cls) -> "Gfp12":  # ✅
+        return cls(Gfp6.zero(), Gfp6.one())
+
+    def is_zero(self) -> bool:  # ✅
         return self.x.is_zero() and self.y.is_zero()
 
-    def is_one(self) -> bool:
+    def is_one(self) -> bool:  # ✅
         return self.x.is_zero() and self.y.is_one()
 
-    def conjugate_of(self) -> "Gfp12":
-        return Gfp12(self.x.negative_of(), self.y)
+    def conjugate(self) -> "Gfp12":  # ✅
+        return Gfp12(-self.x, self.y)
 
-    def negative_of(self) -> "Gfp12":
-        return Gfp12(self.x.negative_of(), self.y.negative_of())
+    def negative(self) -> "Gfp12":  # ✅
+        return Gfp12(-self.x, -self.y)
 
-    def frobenius(self) -> "Gfp12":
-        e1_x = self.x.x.conjugate_of().mul(XI1[4])
-        e1_y = self.x.y.conjugate_of().mul(XI1[2])
-        e1_z = self.x.z.conjugate_of().mul(XI1[0])
+    def frobenius(self) -> "Gfp12":  # ✅
+        x = self.x.frobenius().mul_scalar(XI_TO_P_MINUS_1_OVER_6)
+        y = self.y.frobenius()
+        return Gfp12(x, y)
 
-        e2_x = self.y.x.conjugate_of().mul(XI1[3])
-        e2_y = self.y.y.conjugate_of().mul(XI1[1])
-        e2_z = self.y.z.conjugate_of()
+    def frobenius_p2(self) -> "Gfp12":  # ✅
+        x = self.x.frobenius_p2().mul_gfp(XI_TO_P_SQUARED_MINUS_1_OVER_6)
+        y = self.y.frobenius_p2()
+        return Gfp12(x, y)
 
-        return Gfp12(Gfp6(e1_x, e1_y, e1_z), Gfp6(e2_x, e2_y, e2_z))
+    def add(self, other: "Gfp12") -> "Gfp12":  # ✅
+        assert isinstance(other, Gfp12)
+        x = self.x + other.x
+        y = self.y + other.y
+        return Gfp12(x, y)
 
-    def frobenius_p2(self) -> "Gfp12":
-        e1_x = self.x.x.mul(XI2[4])
-        e1_y = self.x.y.mul(XI2[2])
-        e1_z = self.x.z.mul(XI2[0])
+    def sub(self, other: "Gfp12") -> "Gfp12":  # ✅
+        assert isinstance(other, Gfp12)
+        x = self.x - other.x
+        y = self.y - other.y
+        return Gfp12(x, y)
 
-        e2_x = self.y.x.mul(XI2[3])
-        e2_y = self.y.y.mul(XI2[1])
-        e2_z = self.y.z
+    def mul(self, other: "Gfp12") -> "Gfp12":  #
+        assert isinstance(other, Gfp12)
+        x = (self.x * other.y) + (other.x * self.y)
+        y = (self.y * other.y) + (self.x * other.x).mul_tau()
+        return Gfp12(x, y)
 
-        return Gfp12(Gfp6(e1_x, e1_y, e1_z), Gfp6(e2_x, e2_y, e2_z))
-
-    def sub(self, other: "Gfp12") -> "Gfp12":
-        return Gfp12(self.x - other.x, self.y - other.y)
-
-    def mul(self, other: "Gfp12") -> "Gfp12":
-        # TODO Karatsuba (algo 20)
-        AXBX = self.x * other.x
-        AXBY = self.x * other.y
-        AYBX = self.y * other.x
-        AYBY = self.y * other.y
-        return Gfp12(AXBY + AYBX, AYBY + AXBX.mul_tau())
-
-    def mul_scalar(self, k: Gfp6):
+    def mul_scalar(self, k: Gfp6) -> "Gfp12":  # ✅
         assert isinstance(k, Gfp6)
-        return Gfp12(self.x.mul(k), self.y.mul(k))
+        x = self.x.mul(k)
+        y = self.y.mul(k)
+        return Gfp12(x, y)
 
-    def exp(self, k: int) -> "Gfp12":
+    def exp(self, k: int) -> "Gfp12":  #  ✅
         assert isinstance(k, int)
+        r = Gfp12.one()
+        for b in bits_of(k):
+            r = r.square() * self if b != 0 else r.square()
+        return r
 
-        R = [Gfp12(GFP6_ZERO, GFP6_ONE), self]
+    def square(self) -> "Gfp12":  # ✅
+        t = self.x * self.y
+        x = t.double()
+        y = (self.x + self.y) * (self.y + self.x.mul_tau()) - t - t.mul_tau()
 
-        for kb in bits_of(k):
-            R[kb ^ 1] = R[kb].mul(R[kb ^ 1])
-            R[kb] = R[kb].square()
+        return Gfp12(x, y)
 
-        return R[0]
+    def __invert__(self) -> "Gfp12":  # ✅
+        t = ~(self.y.square() - self.x.square().mul_tau())
+        inv = Gfp12(-self.x, self.y).mul_scalar(t)
+        return inv
 
-    def square(self) -> "Gfp12":
-        v0 = self.x * self.y
-        t = self.x.mul_tau()
-        t += self.y
-        ty = self.x + self.y
-        ty *= t
-        ty -= v0
-        t = v0.mul_tau()
-        ty -= t
+    def invert(self) -> "Gfp12":  # ✅
+        return self.__invert__()
 
-        c_x = v0.double()
-        c_y = ty
+    def set_zero(self) -> "Gfp12":  # ✅
+        self.x.set_zero()
+        self.y.set_zero()
+        return self
 
-        return Gfp12(c_x, c_y)
+    def set_one(self) -> "Gfp12":  # ✅
+        self.x.set_zero()
+        self.y.set_one()
+        return self
 
-    def inverse(self) -> "Gfp12":
-        e = Gfp12(self.x.negative_of(), self.y)
+    def set(self, axx: int, axy: int, ayx: int, ayy: int, azx: int, azy: int,
+            bxx: int, bxy: int, byx: int, byy: int, bzx: int, bzy: int) -> "Gfp12":  # ✅
+        self.x.set(axx, axy, ayx, ayy, azx, azy)
+        self.y.set(bxx, bxy, byx, byy, bzx, bzy)
+        return self
 
-        t1 = self.x.square()
-        t2 = self.y.square()
-        t1 = t1.mul_tau()
-        t1 = t2 - t1
-        t2 = t1.inverse()
+    def string(self) -> str:  # ✅
+        return "(%s,%s)" % (self.x, self.y)
 
-        e = e.mul_scalar(t2)
-        return e
+    def copy(self) -> "Gfp12":  # ✅
+        return Gfp12(self.x.copy(), self.y.copy())
+
+    def minimal(self) -> "Gfp12":  # ✅
+        self.x.minimal()
+        self.y.minimal()
+        return self
