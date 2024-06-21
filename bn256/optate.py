@@ -1,11 +1,9 @@
-import copy
-
-from bn256.constants import U, P
-from bn256.curve import CurvePoint
-from bn256.gfp12 import Gfp12
-from bn256.gfp2 import (Gfp2, XI_TO_P_MINUS_1_OVER_2, XI_TO_P_MINUS_1_OVER_3, XI_TO_P_SQUARED_MINUS_1_OVER_3)
-from bn256.gfp6 import Gfp6
-from bn256.twist import TwistPoint
+from .constants import U, P
+from .curve import CurvePoint
+from .gfp12 import Gfp12
+from .gfp2 import (Gfp2, XI_TO_P_MINUS_1_OVER_2, XI_TO_P_MINUS_1_OVER_3, XI_TO_P_SQUARED_MINUS_1_OVER_3)
+from .gfp6 import Gfp6
+from .twist import TwistPoint
 
 XI = Gfp2(1, 3)  # i + 3
 
