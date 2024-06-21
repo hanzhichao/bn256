@@ -5,18 +5,6 @@ from .gfp2 import (Gfp2, XI_TO_P_MINUS_1_OVER_2, XI_TO_P_MINUS_1_OVER_3, XI_TO_P
 from .gfp6 import Gfp6
 from .twist import TwistPoint
 
-XI = Gfp2(1, 3)  # i + 3
-
-XI1 = [
-    XI.exp(1 * (P - 1) // 6),
-    XI.exp(2 * (P - 1) // 6),
-    XI.exp(3 * (P - 1) // 6),
-    XI.exp(4 * (P - 1) // 6),
-    XI.exp(5 * (P - 1) // 6),
-]
-
-XI2 = [(x * x.conjugate()) for x in XI1]
-
 # 6u+2 in NAF
 NAF_6UP2 = [1, 1, 0, 1, 0, 0, -1, 0, 1, 1, 0, 0, 0, -1, 0, 0, 1, 1, 0, 0, -1, 0, 0, 0, 0, 0, 1, 0, 0, -1, 0, 0,
             1, 1, 1, 0, 0, 0, 0, -1, 0, 1, 0, 0, -1, 0, 1, 1, 0, 0, 1, 0, 0, -1, 1, 0, 0, -1, 0, 1, 0, 1, 0, 0, 0]
