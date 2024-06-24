@@ -14,7 +14,7 @@ class TwistPoint(object):
     n-torsion points of this curve over GF(p²) (where n = Order)
     """
 
-    def __init__(self, x: Gfp2, y: Gfp2, z: Gfp2 = Gfp2.one(), t: Gfp2 = Gfp2.zero()):
+    def __init__(self, x: Gfp2, y: Gfp2, z: Gfp2 = Gfp2.one(), t: Gfp2 = Gfp2.one()):
         assert isinstance(x, Gfp2)
         assert isinstance(y, Gfp2)
         assert isinstance(z, Gfp2)

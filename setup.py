@@ -12,7 +12,7 @@ setup(
     author_email='superhin@126.com',
     description='python bn256',
     install_requires=[],
-    keywords=["bn256", "pybn256", "cryptography"],
+    keywords=["bn256", "python-bn256", "hibe"],
     classifiers=[
         'Development Status :: 3 - Alpha',
         'Topic :: Software Development :: User Interfaces',

@@ -5,7 +5,7 @@ CURVE_B = 3
 
 
 class CurvePoint(object):
-    def __init__(self, x: int, y: int, z: int = 1, t: int = 0):
+    def __init__(self, x: int, y: int, z: int = 1, t: int = 1):
         assert isinstance(x, int)
         assert isinstance(y, int)
         assert isinstance(z, int)
