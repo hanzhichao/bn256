@@ -13,7 +13,7 @@ class GT(object):
     def __repr__(self):
         return '<Gt p=%s>' % self.p
 
-    def __add__(self, other: "GT") -> "GT":  # Fixme ❌
+    def __add__(self, other: "GT") -> "GT":
         return self.add(other)
 
     def __neg__(self) -> "GT":
@@ -47,7 +47,7 @@ class GT(object):
         return GT(self.p.mul(other.p))
 
     def neg(self) -> "GT":
-        return GT(-self.p)
+        return GT(~self.p)
 
     def marshal(self) -> bytes:  # ✅
         self.p.minimal()

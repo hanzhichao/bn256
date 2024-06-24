@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='bn256',
-    version='0.1.1',
+    version='0.1.2',
     long_description=open('README.md').read(),
     long_description_content_type="text/markdown",
     packages=['bn256'],
